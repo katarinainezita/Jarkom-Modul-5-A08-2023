@@ -388,24 +388,24 @@ Karena terdapat 2 WebServer, kalian diminta agar setiap client yang mengakses Se
 Untuk menyelesaikan permasalahan ini, kita perlu menambahkan script berikut pada router - router yang berhubungan langsung dengan client, yakni Himmel dan Heiter.
 ```
 #!/bin/bash
-iptables -A PREROUTING -t nat -p tcp --dport 80 -d 10.3.0.14 -m statistic --mode nth --every 2 --packet 0 -j DNAT --to-destination 10.3.0.14
-iptables -A PREROUTING -t nat -p tcp --dport 80 -d 10.3.0.14 -j DNAT --to-destination 10.3.4.2
+iptables -A PREROUTING -t nat -p tcp --dport 80 -d 10.3.4.2 -m statistic --mode nth --every 2 --packet 0 -j DNAT --to-destination 10.3.4.2
+iptables -A PREROUTING -t nat -p tcp --dport 80 -d 10.3.4.2 -j DNAT --to-destination 10.3.0.14
 
-iptables -A PREROUTING -t nat -p tcp --dport 443 -d 10.3.4.2 -m statistic --mode nth --every 2 --packet 0 -j DNAT --to-destination 10.3.4.2
-iptables -A PREROUTING -t nat -p tcp --dport 443 -d 10.3.4.2 -j DNAT --to-destination 10.3.0.14
+iptables -A PREROUTING -t nat -p tcp --dport 443 -d 10.3.0.14 -m statistic --mode nth --every 2 --packet 0 -j DNAT --to-destination 10.3.0.14
+iptables -A PREROUTING -t nat -p tcp --dport 443 -d 10.3.0.14 -j DNAT --to-destination 10.3.4.2
 ```
 
 - -m statistic --mode nth --every 2 --packet 0: Menggunakan modul statistic untuk merubah setiap paket ke tujuan alternatif setiap dua paket, dimulai dari paket pertama.
 - -j DNAT --to-destination 10.3.0.14: Aksi yang diambil jika paket cocok dengan aturan ini adalah mengubah alamat tujuan (Destination NAT) menjadi 10.3.0.14.
 - paket-paket HTTP lainnya yang tidak masuk ke dalam pembagian setiap dua paket akan diarahkan ke 10.3.4.2.
 
-lakukan testing untuk port 80 dengan menjalankan `script while true; do nc -l -p 80 -c 'echo "stark"'; done` pada Stark dan script `while true; do nc -l -p 80 -c 'echo "sein"';` done pada Sein. Lalu jalankan script `while true; do nc -l -p 80 -c 'echo "stark"'; done` dan `while true; do nc -l -p 80 -c 'echo "sein"'; done`.
+lakukan testing untuk port 80 dengan menjalankan script `while true; do nc -l -p 80 -c 'echo "stark"'; done` pada Stark dan script `while true; do nc -l -p 80 -c 'echo "sein"'; done` pada Sein. Lalu jalankan script `nc 10.3.4.2 80` pada salah satu client untuk testing
 
-Sedangkan untuk port 443, jalankan `script while true; do nc -l -p 443 -c 'echo "stark"'; done` pada Stark dan script `while true; do nc -l -p 443 -c 'echo "sein"'; done` pada Sein. Lalu jalankan script `while true; do nc -l -p 443 -c 'echo "stark"'; done` dan `while true; do nc -l -p 443 -c 'echo "sein"'; done`.
+Sedangkan untuk port 443, jalankan `script while true; do nc -l -p 443 -c 'echo "stark"'; done` pada Stark dan script `while true; do nc -l -p 443 -c 'echo "sein"'; done` pada Sein. Lalu jalankan script `nc 10.3.0.14 443` pada salah satu client untuk testing
 
-![image](https://github.com/katarinainezita/Jarkom-Modul-5-A08-2023/assets/105977864/1f3975f8-538d-48dd-a5d3-8614cc2d995a)
+<img width="787" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-5-A08-2023/assets/105977864/77f51458-5676-4e1f-b860-9865ac9f7c72">
 
-![image](https://github.com/katarinainezita/Jarkom-Modul-5-A08-2023/assets/105977864/d36d1846-c947-45d3-a0c1-f6e760730652)
+<img width="799" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-5-A08-2023/assets/105977864/28796cb1-c4e3-4cff-b020-e55634857283">
 
 ### No. 8
 Karena berbeda koalisi politik, maka subnet dengan masyarakat yang berada pada Revolte dilarang keras mengakses WebServer hingga masa pencoblosan pemilu kepala suku 2024 berakhir. Masa pemilu (hingga pemungutan dan penghitungan suara selesai) kepala suku bersamaan dengan masa pemilu Presiden dan Wakil Presiden Indonesia 2024.
@@ -450,7 +450,7 @@ iptables -I FORWARD 1 -m recent --name scan_port --update --seconds 600 --hitcou
 Karena kepala suku ingin tau paket apa saja yang di-drop, maka di setiap node server dan router ditambahkan logging paket yang di-drop dengan standard syslog level.
 
 #### Solusi
-Untuk menyelesaikan permasalahan ini, kita perlu menambahkan script berikut ini pada web server, Sein dan Stark
+Untuk menyelesaikan permasalahan ini, kita perlu menambahkan script berikut ini pada semua router dan web server
 ```
 #!/bin/bash
 iptables -I INPUT 1 -j LOG --log-level debug --log-prefix 'packet dropped : ' -m limit --limit 1/second --limit-burst 10
